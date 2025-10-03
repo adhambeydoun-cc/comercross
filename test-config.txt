@@ -1,0 +1,14 @@
+# Test Configuration for Dialpad to BuilderPrime Webhook
+# Test BuilderPrime Account Credentials
+
+# Dialpad Webhook Configuration
+DIALPAD_WEBHOOK_SECRET=HEkFAXcs4kkLUGB2qRDQcgbyaGEWTLHy444sqGeD65QaFfFcA5ZGxhvPaN26hb6Phnq9LkJE32CVan7h7AeasCNBMsWsjQFFsrMj
+
+# BuilderPrime Test Account Configuration
+BUILDERPRIME_API_KEY=CrylHk2.lQ8zZDbuDFtj94jniUpn
+BUILDERPRIME_BASE_URL=https://dialpad-testing.builderprime.com/api/clients/v1
+
+# Test with these commands:
+# export DIALPAD_WEBHOOK_SECRET="your_actual_secret"
+# export BUILDERPRIME_API_KEY="your_actual_api_key"
+# npm run dev

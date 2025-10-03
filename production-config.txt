@@ -1,0 +1,14 @@
+# PRODUCTION Configuration for Comer Cross CRM
+# Using production credentials for real webhook integration
+
+# Dialpad Webhook Configuration (PRODUCTION)
+DIALPAD_WEBHOOK_SECRET=190283950172
+
+# BuilderPrime Production Account Configuration (Comer Cross)
+BUILDERPRIME_API_KEY=dOMWhfG.OJGXMbX1bO5V7mTUrfN4
+BUILDERPRIME_BASE_URL=https://comercross.builderprime.com/api
+
+# Test credentials (saved for reference):
+# DIALPAD_WEBHOOK_SECRET=HEkFAXcs4kkLUGB2qRDQcgbyaGEWTLHy444sqGeD65QaFfFcA5ZGxhvPaN26hb6Phnq9LkJE32CVan7h7AeasCNBMsWsjQFFsrMj
+# BUILDERPRIME_API_KEY=CrylHk2.lQ8zZDbuDFtj94jniUpn
+# BUILDERPRIME_BASE_URL=https://dialpad-testing.builderprime.com/api
