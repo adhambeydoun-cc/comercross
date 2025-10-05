@@ -77,7 +77,7 @@ export class WebhookHandler {
       // 6. WRITE activity (recording link + call meta) on the chosen client
       const activityData: BuilderPrimeClientActivity = {
         opportunityId: client.opportunityId,
-        activityDateTime: new Date(callLog.start_time).getTime(), // Convert to milliseconds since epoch
+        activityDateTime: Date.now(), // Use current time when activity is logged
         activityType: 'CALL',
         callOutcome: this.mapCallOutcome(callLog.status),
         description: this.buildCallDescription(callLog, normalizedPhone.e164),
@@ -125,7 +125,7 @@ export class WebhookHandler {
 
   /**
    * Build call description from Dialpad call log
-   * Simple & Clean format with DialPad number
+   * Simple & Clean format with DialPad number and call time
    */
   private buildCallDescription(callLog: DialpadCallLog, normalizedPhone: string): string {
     const direction = callLog.direction === 'inbound' ? 'Inbound' : 'Outbound';
@@ -133,9 +133,13 @@ export class WebhookHandler {
     // Get the DialPad number (to_number for inbound, from_number for outbound)
     const dialpadNumber = callLog.direction === 'inbound' ? callLog.to_number : callLog.from_number;
     
-    // Simple & Clean format with separator and DialPad number
+    // Format the call time for display
+    const callTime = new Date(callLog.start_time).toLocaleString();
+    
+    // Simple & Clean format with separator, DialPad number, and call time
     let description = `${direction} call from ${normalizedPhone}`;
     description += ` | DialPad: ${dialpadNumber}`;
+    description += ` | Call time: ${callTime}`;
     
     return description;
   }
