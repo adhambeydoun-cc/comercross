@@ -129,12 +129,15 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       fastify.log.info(`🔍 Call state: ${payload.state}`);
       
       // Convert direct call data to call log format
+      // For Dialpad webhooks:
+      // - external_number = customer phone (who we're calling or who called us)
+      // - internal_number = our business phone (our Dialpad number)
       const callLogData = {
         id: payload.call_id.toString(),
         call_id: payload.call_id.toString(),
         direction: payload.direction,
-        from_number: payload.external_number,
-        to_number: payload.internal_number,
+        from_number: payload.direction === 'inbound' ? payload.external_number : payload.internal_number,
+        to_number: payload.direction === 'inbound' ? payload.internal_number : payload.external_number,
         start_time: new Date(payload.date_started).toISOString(),
         end_time: payload.date_ended ? new Date(payload.date_ended).toISOString() : new Date().toISOString(),
         duration: payload.duration || payload.talk_time,
