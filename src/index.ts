@@ -101,7 +101,10 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
     
     // Process each event
     for (const event of payload.events) {
-      if (event.event_type === 'call_log.created' || event.event_type === 'call_log.updated' || event.event_type === 'call.completed' || event.event_type === 'call.ended' || event.event_type === 'call_log.ended') {
+      fastify.log.info(`🔍 Processing event: ${event.event_type}`);
+      fastify.log.info(`🔍 Event data: ${JSON.stringify(event.data, null, 2)}`);
+      
+      if (event.event_type === 'call_log.created' || event.event_type === 'call_log.updated' || event.event_type === 'call.completed' || event.event_type === 'call.ended' || event.event_type === 'call_log.ended' || event.event_type === 'call.connected') {
         const result = await webhookHandler.processCallLogEvent(event.data);
         results.push({
           event_type: event.event_type,
