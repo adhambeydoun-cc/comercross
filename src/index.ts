@@ -108,7 +108,7 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       fastify.log.warn('Missing webhook secret or signature - skipping verification');
     }
 
-    const payload = request.body as any as DialpadWebhookPayload;
+    const payload = request.body as any;
     
     // DEBUG: Log the payload structure
     fastify.log.info('🔍 DEBUG: Payload structure: ' + JSON.stringify({
@@ -116,47 +116,84 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       eventsIsArray: Array.isArray(payload.events),
       eventsLength: payload.events?.length || 0,
       payloadKeys: Object.keys(payload || {}),
-      firstEventType: payload.events?.[0]?.event_type || 'none'
+      firstEventType: payload.events?.[0]?.event_type || 'none',
+      hasCallId: !!payload.call_id,
+      hasState: !!payload.state
     }));
     
-    if (!payload.events || !Array.isArray(payload.events)) {
-      fastify.log.error('❌ Invalid payload format - missing events array');
-      return reply.status(400).send({ error: 'Invalid payload format' });
-    }
-
     const results = [];
     
-    // Process each event
-    for (const event of payload.events) {
-      fastify.log.info(`🔍 Processing event: ${event.event_type}`);
-      fastify.log.info(`🔍 Event data: ${JSON.stringify(event.data, null, 2)}`);
+    // Check if this is the new direct call data format (from JWT)
+    if (payload.call_id && payload.state) {
+      fastify.log.info(`🔍 Processing direct call data for call ID: ${payload.call_id}`);
+      fastify.log.info(`🔍 Call state: ${payload.state}`);
       
-      if (event.event_type === 'call_log.created' || event.event_type === 'call_log.updated' || event.event_type === 'call.completed' || event.event_type === 'call.ended' || event.event_type === 'call_log.ended') {
-        // Handle call log events directly
-        const result = await webhookHandler.processCallLogEvent(event.data);
-        results.push({
-          event_type: event.event_type,
-          call_id: event.data.call_id,
-          success: result.success,
-          error: result.error,
-        });
-      } else if (event.event_type === 'call.connected' || event.event_type === 'call.ringing' || event.event_type === 'call.recording') {
-        // Handle call events by fetching call log data
-        const result = await webhookHandler.processCallEvent(event.data);
-        results.push({
-          event_type: event.event_type,
-          call_id: event.data.call_id || event.data.id,
-          success: result.success,
-          error: result.error,
-        });
-      } else {
-        fastify.log.info(`Ignoring event type: ${event.event_type}`);
-        results.push({
-          event_type: event.event_type,
-          success: true,
-          message: 'Event type not processed',
-        });
+      // Convert direct call data to call log format
+      const callLogData = {
+        id: payload.call_id.toString(),
+        call_id: payload.call_id.toString(),
+        direction: payload.direction,
+        from_number: payload.external_number,
+        to_number: payload.internal_number,
+        start_time: new Date(payload.date_started).toISOString(),
+        end_time: payload.date_ended ? new Date(payload.date_ended).toISOString() : new Date().toISOString(),
+        duration: payload.duration || payload.talk_time,
+        status: payload.state === 'recording' ? 'answered' : payload.state,
+        recording_url: payload.recording_url?.[0] || null,
+        contact: payload.contact,
+        target: payload.target
+      };
+      
+      fastify.log.info(`🔍 Converted call log data: ${JSON.stringify(callLogData, null, 2)}`);
+      
+      // Process the call log data directly
+      const result = await webhookHandler.processCallLogEvent(callLogData);
+      results.push({
+        event_type: 'call.recording',
+        call_id: payload.call_id,
+        success: result.success,
+        error: result.error,
+      });
+      
+    } else if (payload.events && Array.isArray(payload.events)) {
+      // Handle the old events array format
+      fastify.log.info(`🔍 Processing events array with ${payload.events.length} events`);
+      
+      // Process each event
+      for (const event of payload.events) {
+        fastify.log.info(`🔍 Processing event: ${event.event_type}`);
+        fastify.log.info(`🔍 Event data: ${JSON.stringify(event.data, null, 2)}`);
+        
+        if (event.event_type === 'call_log.created' || event.event_type === 'call_log.updated' || event.event_type === 'call.completed' || event.event_type === 'call.ended' || event.event_type === 'call_log.ended') {
+          // Handle call log events directly
+          const result = await webhookHandler.processCallLogEvent(event.data);
+          results.push({
+            event_type: event.event_type,
+            call_id: event.data.call_id,
+            success: result.success,
+            error: result.error,
+          });
+        } else if (event.event_type === 'call.connected' || event.event_type === 'call.ringing' || event.event_type === 'call.recording') {
+          // Handle call events by fetching call log data
+          const result = await webhookHandler.processCallEvent(event.data);
+          results.push({
+            event_type: event.event_type,
+            call_id: event.data.call_id || event.data.id, // Use event.data.id as fallback for call_id
+            success: result.success,
+            error: result.error,
+          });
+        } else {
+          fastify.log.info(`Ignoring event type: ${event.event_type}`);
+          results.push({
+            event_type: event.event_type,
+            success: true,
+            message: 'Event type not processed',
+          });
+        }
       }
+    } else {
+      fastify.log.error('❌ Invalid payload format - neither direct call data nor events array');
+      return reply.status(400).send({ error: 'Invalid payload format' });
     }
 
     return reply.send({
