@@ -113,6 +113,9 @@ export class WebhookHandler {
       const startTime = new Date(callLog.start_time).toISOString();
       const uniqueKey = `${callLog.call_id}-${normalizedPhone.e164}-${startTime}`;
       
+      console.log(`🔍 IDEMPOTENCY CHECK: uniqueKey = ${uniqueKey}`);
+      console.log(`🔍 Processed calls: ${Array.from(this.processedCalls).join(', ')}`);
+      
       if (this.processedCalls.has(uniqueKey)) {
         console.log(`⏭️ Call ${uniqueKey} already processed, skipping (idempotency)`);
         return { success: true, error: 'Call already processed' };
@@ -120,6 +123,7 @@ export class WebhookHandler {
 
       // Mark this call as processed
       this.processedCalls.add(uniqueKey);
+      console.log(`✅ Added ${uniqueKey} to processed calls`);
 
       console.log(`📱 Customer phone: ${customerPhone} → ${normalizedPhone.e164}`);
 

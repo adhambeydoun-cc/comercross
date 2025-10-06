@@ -118,7 +118,9 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       payloadKeys: Object.keys(payload || {}),
       firstEventType: payload.events?.[0]?.event_type || 'none',
       hasCallId: !!payload.call_id,
-      hasState: !!payload.state
+      hasState: !!payload.state,
+      callId: payload.call_id,
+      state: payload.state
     }));
     
     const results = [];
@@ -128,6 +130,7 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
     if (payload.call_id && payload.state === 'recording') {
       fastify.log.info(`🔍 Processing direct call data for call ID: ${payload.call_id}`);
       fastify.log.info(`🔍 Call state: ${payload.state}`);
+      fastify.log.info(`🔍 EXECUTING ACTIVITY CREATION - This should only happen once per call!`);
       
       // Convert direct call data to call log format
       // For Dialpad webhooks:
