@@ -7,7 +7,7 @@ export interface DialpadCallLog {
   start_time: string;
   end_time: string;
   duration: number;
-  status: 'answered' | 'missed' | 'voicemail' | 'busy' | 'failed';
+  status: 'answered' | 'missed' | 'voicemail' | 'busy' | 'failed' | 'ringing' | 'connected' | 'recording';
   recording_url?: string;
   voicemail_url?: string;
   user_id?: string;
@@ -16,6 +16,21 @@ export interface DialpadCallLog {
   department_name?: string;
   tags?: string[];
   notes?: string;
+  contact?: {
+    id: number;
+    type: string;
+    email: string;
+    phone: string;
+    name: string;
+  };
+  target?: {
+    id: number;
+    type: string;
+    email: string;
+    phone: string;
+    name: string;
+    office_id: number;
+  };
 }
 
 export interface DialpadWebhookEvent {

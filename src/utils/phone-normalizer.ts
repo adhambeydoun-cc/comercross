@@ -78,6 +78,28 @@ export function extractCustomerPhone(callLog: any): string | null {
 }
 
 /**
+ * Extract business phone number from Dialpad call log
+ * For inbound calls: business is the "to" number or target.phone
+ * For outbound calls: business is the target.phone (more reliable than from_number)
+ */
+export function extractBusinessPhone(callLog: any): string | null {
+  if (!callLog || !callLog.direction) {
+    return null;
+  }
+
+  // For both inbound and outbound, use target.phone as the business number
+  // This is more reliable than from_number/to_number which can be wrong
+  if (callLog.target && callLog.target.phone) {
+    return callLog.target.phone;
+  }
+
+  // Fallback to traditional logic if target.phone is not available
+  return callLog.direction === 'inbound' 
+    ? callLog.to_number 
+    : callLog.from_number;
+}
+
+/**
  * Check if two phone numbers are equivalent (same customer)
  */
 export function arePhoneNumbersEquivalent(phone1: string, phone2: string): boolean {

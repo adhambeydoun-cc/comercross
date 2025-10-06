@@ -199,8 +199,9 @@ export class WebhookHandler {
   private buildCallDescription(callLog: DialpadCallLog, normalizedPhone: string): string {
     const direction = callLog.direction === 'inbound' ? 'Inbound' : 'Outbound';
     
-    // Get the DialPad number (to_number for inbound, from_number for outbound)
-    const dialpadNumber = callLog.direction === 'inbound' ? callLog.to_number : callLog.from_number;
+    // Get the DialPad business number (use target.phone for accuracy)
+    const dialpadNumber = callLog.target?.phone || 
+      (callLog.direction === 'inbound' ? callLog.to_number : callLog.from_number);
     
     // Simple & Clean format with separator and DialPad number
     let description = `${direction} call from ${normalizedPhone}`;
