@@ -35,6 +35,16 @@ const fastify: FastifyInstance = Fastify({
   } : {}),
 });
 
+// Add support for application/jwt content type
+fastify.addContentTypeParser('application/jwt', { parseAs: 'string' }, (req, body, done) => {
+  try {
+    const json = JSON.parse(body as string);
+    done(null, json);
+  } catch (err) {
+    done(err as Error, undefined);
+  }
+});
+
 // Initialize webhook handler
 const webhookHandler = new WebhookHandler(BUILDERPRIME_API_KEY, BUILDERPRIME_BASE_URL);
 
