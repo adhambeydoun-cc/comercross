@@ -124,7 +124,8 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
     const results = [];
     
     // Check if this is the new direct call data format (from JWT)
-    if (payload.call_id && payload.state) {
+    // Only process when call is in 'recording' state to avoid duplicates
+    if (payload.call_id && payload.state === 'recording') {
       fastify.log.info(`🔍 Processing direct call data for call ID: ${payload.call_id}`);
       fastify.log.info(`🔍 Call state: ${payload.state}`);
       
