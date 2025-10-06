@@ -181,8 +181,9 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
             success: result.success,
             error: result.error,
           });
-        } else if (event.event_type === 'call.connected' || event.event_type === 'call.ringing' || event.event_type === 'call.recording') {
-          // Handle call events by fetching call log data
+        } else if (event.event_type === 'call.recording') {
+          // Only process 'call.recording' events to avoid duplicates
+          // This ensures we only create one activity per call
           const result = await webhookHandler.processCallEvent(event.data);
           results.push({
             event_type: event.event_type,

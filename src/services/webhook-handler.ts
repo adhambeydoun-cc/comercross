@@ -94,26 +94,32 @@ export class WebhookHandler {
     try {
       console.log(`📞 Processing call log event for call ID: ${callLog.call_id}`);
 
-      // 1. IDEMPOTENCY CHECK - Don't process the same call twice
-      const callId = callLog.call_id;
-      if (this.processedCalls.has(callId)) {
-        console.log(`⏭️ Call ${callId} already processed, skipping (idempotency)`);
-        return { success: true, error: 'Call already processed' };
-      }
-
-      // 2. EXTRACT customer phone from Dialpad event
+      // 1. EXTRACT customer phone from Dialpad event
       const customerPhone = extractCustomerPhone(callLog);
       if (!customerPhone) {
         console.log(`❌ Could not extract customer phone from call log`);
         return { success: false, error: 'Could not extract customer phone number' };
       }
 
-      // 3. NORMALIZE phone number to E.164 format
+      // 2. NORMALIZE phone number to E.164 format
       const normalizedPhone = normalizePhoneNumber(customerPhone);
       if (!normalizedPhone) {
         console.log(`❌ Invalid phone number format: ${customerPhone}`);
         return { success: false, error: `Invalid phone number format: ${customerPhone}` };
       }
+
+      // 3. IDEMPOTENCY CHECK - Don't process the same call twice
+      // Use call_id + customer phone + start_time to create unique key
+      const startTime = new Date(callLog.start_time).toISOString();
+      const uniqueKey = `${callLog.call_id}-${normalizedPhone.e164}-${startTime}`;
+      
+      if (this.processedCalls.has(uniqueKey)) {
+        console.log(`⏭️ Call ${uniqueKey} already processed, skipping (idempotency)`);
+        return { success: true, error: 'Call already processed' };
+      }
+
+      // Mark this call as processed
+      this.processedCalls.add(uniqueKey);
 
       console.log(`📱 Customer phone: ${customerPhone} → ${normalizedPhone.e164}`);
 
@@ -156,10 +162,7 @@ export class WebhookHandler {
         return { success: false, error: result.error || 'Failed to create client activity' };
       }
 
-      // 7. MARK AS PROCESSED (idempotency)
-      this.processedCalls.add(callId);
-
-      console.log(`✅ Successfully processed call ${callId} for client ${client.opportunityId}`);
+      console.log(`✅ Successfully processed call ${callLog.call_id} for client ${client.opportunityId}`);
       return { success: true };
 
     } catch (error) {
