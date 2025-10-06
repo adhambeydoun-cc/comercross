@@ -21,6 +21,72 @@ export class WebhookHandler {
   }
 
   /**
+   * Process Dialpad call event (not call log event)
+   * Fetch call log data from Dialpad API and create BuilderPrime activity
+   */
+  async processCallEvent(callEvent: any): Promise<{ success: boolean; error?: string }> {
+    try {
+      console.log(`📞 Processing call event: ${JSON.stringify(callEvent)}`);
+
+      // Extract call ID from the event
+      const callId = callEvent.call_id || callEvent.id;
+      if (!callId) {
+        console.log(`❌ No call ID found in event`);
+        return { success: false, error: 'No call ID found in event' };
+      }
+
+      console.log(`🔍 Fetching call log data for call ID: ${callId}`);
+
+      // Fetch call log data from Dialpad API
+      const callLogData = await this.fetchCallLogFromDialpad(callId);
+      if (!callLogData) {
+        console.log(`❌ Could not fetch call log data for call ID: ${callId}`);
+        return { success: false, error: 'Could not fetch call log data' };
+      }
+
+      // Process the call log data
+      return await this.processCallLogEvent(callLogData);
+
+    } catch (error) {
+      console.error(`❌ Error processing call event:`, error);
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
+   * Fetch call log data from Dialpad API
+   */
+  private async fetchCallLogFromDialpad(callId: string): Promise<any> {
+    try {
+      const dialpadApiKey = process.env.DIALPAD_API_KEY;
+      if (!dialpadApiKey) {
+        console.log(`❌ No Dialpad API key configured`);
+        return null;
+      }
+
+      const response = await fetch(`https://dialpad.com/api/v2/calls/${callId}`, {
+        headers: {
+          'Authorization': `Bearer ${dialpadApiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.log(`❌ Failed to fetch call log: ${response.status} ${response.statusText}`);
+        return null;
+      }
+
+      const callData = await response.json();
+      console.log(`✅ Fetched call log data: ${JSON.stringify(callData)}`);
+      return callData;
+
+    } catch (error) {
+      console.error(`❌ Error fetching call log:`, error);
+      return null;
+    }
+  }
+
+  /**
    * Process Dialpad call log webhook event
    * Implements: Extract → Normalize → Lookup → Disambiguate → Write → Idempotency
    */

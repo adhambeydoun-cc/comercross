@@ -104,11 +104,21 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       fastify.log.info(`🔍 Processing event: ${event.event_type}`);
       fastify.log.info(`🔍 Event data: ${JSON.stringify(event.data, null, 2)}`);
       
-      if (event.event_type === 'call_log.created' || event.event_type === 'call_log.updated' || event.event_type === 'call.completed' || event.event_type === 'call.ended' || event.event_type === 'call_log.ended' || event.event_type === 'call.connected') {
+      if (event.event_type === 'call_log.created' || event.event_type === 'call_log.updated' || event.event_type === 'call.completed' || event.event_type === 'call.ended' || event.event_type === 'call_log.ended') {
+        // Handle call log events directly
         const result = await webhookHandler.processCallLogEvent(event.data);
         results.push({
           event_type: event.event_type,
           call_id: event.data.call_id,
+          success: result.success,
+          error: result.error,
+        });
+      } else if (event.event_type === 'call.connected' || event.event_type === 'call.ringing' || event.event_type === 'call.recording') {
+        // Handle call events by fetching call log data
+        const result = await webhookHandler.processCallEvent(event.data);
+        results.push({
+          event_type: event.event_type,
+          call_id: event.data.call_id || event.data.id,
           success: result.success,
           error: result.error,
         });
