@@ -42,28 +42,22 @@ fastify.addContentTypeParser('application/jwt', { parseAs: 'string' }, (req, bod
     const jwtToken = body as string;
     console.log(`🔍 Received JWT token: ${jwtToken.substring(0, 50)}...`);
     
-    // For now, let's create a mock payload structure
-    // In a real implementation, you'd decode the JWT to get the actual payload
-    const mockPayload = {
-      events: [{
-        event_type: 'call.connected',
-        timestamp: new Date().toISOString(),
-        data: {
-          call_id: 'mock-call-' + Date.now(),
-          direction: 'outbound',
-          from_number: '3135551234',
-          to_number: '3138200154',
-          start_time: new Date().toISOString(),
-          end_time: new Date().toISOString(),
-          duration: 120,
-          status: 'answered'
-        }
-      }]
-    };
+    // Decode JWT without verification for now (we'll verify signature later)
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.decode(jwtToken, { complete: true });
     
-    console.log(`🔍 Created mock payload: ${JSON.stringify(mockPayload)}`);
-    done(null, mockPayload);
+    if (!decoded || !decoded.payload) {
+      console.log(`❌ Failed to decode JWT token`);
+      done(new Error('Invalid JWT token'), undefined);
+      return;
+    }
+    
+    console.log(`🔍 Decoded JWT payload: ${JSON.stringify(decoded.payload, null, 2)}`);
+    
+    // The payload should contain the webhook data
+    done(null, decoded.payload);
   } catch (err) {
+    console.log(`❌ Error decoding JWT: ${err}`);
     done(err as Error, undefined);
   }
 });
