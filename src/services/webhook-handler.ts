@@ -174,10 +174,13 @@ export class WebhookHandler {
   private mapCallOutcome(status: string): 'NO_ANSWER' | 'BUSY' | 'WRONG_NUMBER' | 'LEFT_LIVE_MESSAGE' | 'LEFT_VOICEMAIL' | 'CONNECTED' {
     switch (status.toLowerCase()) {
       case 'answered':
+      case 'connected':
+      case 'recording':
+      case 'ringing':
         return 'CONNECTED';
       case 'no_answer':
       case 'no-answer':
-        return 'LEFT_VOICEMAIL'; // Use LEFT_VOICEMAIL instead of NO_ANSWER
+        return 'LEFT_VOICEMAIL';
       case 'busy':
         return 'BUSY';
       case 'voicemail':
@@ -185,7 +188,7 @@ export class WebhookHandler {
       case 'failed':
         return 'WRONG_NUMBER';
       default:
-        return 'LEFT_VOICEMAIL'; // Default to LEFT_VOICEMAIL instead of NO_ANSWER
+        return 'CONNECTED'; // Default to CONNECTED for active calls
     }
   }
 
