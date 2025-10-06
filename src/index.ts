@@ -139,7 +139,7 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
         end_time: payload.date_ended ? new Date(payload.date_ended).toISOString() : new Date().toISOString(),
         duration: payload.duration || payload.talk_time,
         status: payload.state === 'recording' ? 'answered' : payload.state,
-        recording_url: payload.recording_url?.[0] || null,
+        recording_url: payload.recording_url?.[0] || payload.admin_recording_urls?.[0] || null,
         contact: payload.contact,
         target: payload.target
       };
@@ -148,11 +148,16 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       
       // Process the call log data directly
       const result = await webhookHandler.processCallLogEvent(callLogData);
-      results.push({
-        event_type: 'call.recording',
-        call_id: payload.call_id,
-        success: result.success,
-        error: result.error,
+      
+      return reply.send({
+        success: true,
+        processed_call: payload.call_id,
+        call_state: payload.state,
+        call_direction: payload.direction,
+        result: {
+          success: result.success,
+          error: result.error,
+        },
       });
       
     } else if (payload.events && Array.isArray(payload.events)) {
