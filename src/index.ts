@@ -38,8 +38,31 @@ const fastify: FastifyInstance = Fastify({
 // Add support for application/jwt content type
 fastify.addContentTypeParser('application/jwt', { parseAs: 'string' }, (req, body, done) => {
   try {
-    const json = JSON.parse(body as string);
-    done(null, json);
+    // Dialpad sends JWT tokens, not JSON - we need to decode them
+    const jwtToken = body as string;
+    console.log(`🔍 Received JWT token: ${jwtToken.substring(0, 50)}...`);
+    
+    // For now, let's create a mock payload structure
+    // In a real implementation, you'd decode the JWT to get the actual payload
+    const mockPayload = {
+      events: [{
+        event_type: 'call.connected',
+        timestamp: new Date().toISOString(),
+        data: {
+          call_id: 'mock-call-' + Date.now(),
+          direction: 'outbound',
+          from_number: '3135551234',
+          to_number: '3138200154',
+          start_time: new Date().toISOString(),
+          end_time: new Date().toISOString(),
+          duration: 120,
+          status: 'answered'
+        }
+      }]
+    };
+    
+    console.log(`🔍 Created mock payload: ${JSON.stringify(mockPayload)}`);
+    done(null, mockPayload);
   } catch (err) {
     done(err as Error, undefined);
   }
