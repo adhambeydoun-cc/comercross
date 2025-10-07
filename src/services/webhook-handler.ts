@@ -157,7 +157,7 @@ export class WebhookHandler {
         activityType: 'CALL',
         callOutcome: this.mapCallOutcome(callLog.status),
         description: this.buildCallDescription(callLog, normalizedPhone.e164),
-        secretKey: 'CrylHk2.lQ8zZDbuDFtj94jniUpn', // Use test API key as secret key
+        secretKey: process.env.BUILDERPRIME_API_KEY || 'CrylHk2.lQ8zZDbuDFtj94jniUpn', // Use production API key
       };
 
       const result = await this.builderPrimeClient.createClientActivity(activityData);
