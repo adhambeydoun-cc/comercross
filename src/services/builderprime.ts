@@ -110,13 +110,13 @@ export class BuilderPrimeClient {
     console.log(`🔍 Searching for client with phone: ${phoneNumber} (normalized: ${normalized.e164})`);
 
     // Try exact match first with E.164 format using correct parameter name 'phone'
-    const exactMatch = await this.makeRequest<BuilderPrimeContact | BuilderPrimeContact[]>(`/contacts?phone=${normalized.e164}`);
+    const exactMatch = await this.makeRequest<BuilderPrimeContact | BuilderPrimeContact[]>(`/clients?phone=${normalized.e164}`);
     if (exactMatch.success && exactMatch.data) {
       return this.handleDisambiguation(exactMatch.data, normalized.e164);
     }
     
     // Fallback to last 10 digits if exact match fails
-    const last10Match = await this.makeRequest<BuilderPrimeContact | BuilderPrimeContact[]>(`/contacts?phone=${normalized.last10}`);
+    const last10Match = await this.makeRequest<BuilderPrimeContact | BuilderPrimeContact[]>(`/clients?phone=${normalized.last10}`);
     if (last10Match.success && last10Match.data) {
       return this.handleDisambiguation(last10Match.data, normalized.e164);
     }
