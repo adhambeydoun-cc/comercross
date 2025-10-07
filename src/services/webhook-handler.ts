@@ -129,7 +129,7 @@ export class WebhookHandler {
 
       // 4. LOOKUP client in BuilderPrime by phone
       console.log(`🔍 Searching for client with phone: ${normalizedPhone.e164}`);
-      const contactResult = await this.builderPrimeClient.findContactByPhone(customerPhone);
+      const contactResult = await this.builderPrimeClient.findContactByPhone(normalizedPhone.e164);
       
       if (!contactResult.success) {
         console.log(`❌ Error searching for client: ${contactResult.error}`);
@@ -138,8 +138,8 @@ export class WebhookHandler {
 
       // 5. DISAMBIGUATE - Handle 0, 1, or many matches
       if (!contactResult.data) {
-        console.log(`❌ No client found for phone: ${customerPhone}`);
-        return { success: false, error: `No client found for phone number: ${customerPhone}` };
+        console.log(`❌ No client found for phone: ${normalizedPhone.e164}`);
+        return { success: false, error: `No client found for phone number: ${normalizedPhone.e164}` };
       }
 
       const client = contactResult.data;
