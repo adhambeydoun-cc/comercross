@@ -119,17 +119,20 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
       firstEventType: payload.events?.[0]?.event_type || 'none',
       hasCallId: !!payload.call_id,
       hasState: !!payload.state,
+      hasDateEnded: !!payload.date_ended,
       callId: payload.call_id,
-      state: payload.state
+      state: payload.state,
+      dateEnded: payload.date_ended
     }));
     
     const results = [];
     
     // Check if this is the new direct call data format (from JWT)
-    // Only process when call is in 'recording' state to avoid duplicates
-    if (payload.call_id && payload.state === 'recording') {
+    // Only process when call is in 'recording' state AND has ended (date_ended is set) to avoid duplicates
+    if (payload.call_id && payload.state === 'recording' && payload.date_ended) {
       fastify.log.info(`🔍 Processing direct call data for call ID: ${payload.call_id}`);
       fastify.log.info(`🔍 Call state: ${payload.state}`);
+      fastify.log.info(`🔍 Call ended: ${payload.date_ended}`);
       fastify.log.info(`🔍 EXECUTING ACTIVITY CREATION - This should only happen once per call!`);
       
       // Convert direct call data to call log format
@@ -165,6 +168,16 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
           success: result.success,
           error: result.error,
         },
+      });
+      
+    } else if (payload.call_id && payload.state && !payload.date_ended) {
+      // Call is in progress but not finished - skip processing to avoid duplicates
+      fastify.log.info(`⏳ Skipping call ${payload.call_id} - state: ${payload.state}, not yet ended`);
+      return reply.send({
+        success: true,
+        skipped_call: payload.call_id,
+        reason: 'Call not yet finished',
+        call_state: payload.state,
       });
       
     } else if (payload.events && Array.isArray(payload.events)) {
