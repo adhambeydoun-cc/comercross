@@ -129,8 +129,9 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
     
     // Check if this is the new direct call data format (from JWT)
     // Only process when call has ended (date_ended is set) to avoid duplicates
-    // Accept both 'recording' and 'connected' states as long as the call has ended
-    if (payload.call_id && payload.date_ended && (payload.state === 'recording' || payload.state === 'connected')) {
+    // Accept all valid call end states: recording, connected, missed, no_answer, busy, voicemail
+    const validEndStates = ['recording', 'connected', 'missed', 'no_answer', 'busy', 'voicemail', 'failed'];
+    if (payload.call_id && payload.date_ended && validEndStates.includes(payload.state)) {
       fastify.log.info(`🔍 Processing direct call data for call ID: ${payload.call_id}`);
       fastify.log.info(`🔍 Call state: ${payload.state}`);
       fastify.log.info(`🔍 Call ended: ${payload.date_ended}`);
@@ -180,7 +181,7 @@ fastify.post('/webhook/dialpad', async (request: FastifyRequest, reply: FastifyR
         reason: 'Call not yet finished',
         call_state: payload.state,
       });
-    } else if (payload.call_id && payload.state && payload.date_ended && payload.state !== 'recording' && payload.state !== 'connected') {
+    } else if (payload.call_id && payload.state && payload.date_ended && !validEndStates.includes(payload.state)) {
       // Call has ended but in an unexpected state - skip processing
       fastify.log.info(`⏳ Skipping call ${payload.call_id} - state: ${payload.state}, unexpected state for ended call`);
       return reply.send({
