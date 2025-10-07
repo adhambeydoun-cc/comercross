@@ -204,10 +204,11 @@ export class WebhookHandler {
    * Simple & Clean format - only direction and customer phone
    */
   private buildCallDescription(callLog: DialpadCallLog, normalizedPhone: string): string {
-    const direction = callLog.direction === 'inbound' ? 'Inbound' : 'Outbound';
-    
-    // Simple & Clean format - only direction and customer phone
-    return `${direction} call from ${normalizedPhone}`;
+    if (callLog.direction === 'inbound') {
+      return `Inbound call from ${normalizedPhone}`;
+    } else {
+      return `Outbound call to ${normalizedPhone}`;
+    }
   }
 
   /**
