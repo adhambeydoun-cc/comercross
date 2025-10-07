@@ -201,14 +201,23 @@ export class WebhookHandler {
 
   /**
    * Build call description from Dialpad call log
-   * Simple & Clean format - only direction and customer phone
+   * Includes direction, customer phone, and clickable recording link
    */
   private buildCallDescription(callLog: DialpadCallLog, normalizedPhone: string): string {
+    let description: string;
+    
     if (callLog.direction === 'inbound') {
-      return `Inbound call from ${normalizedPhone}`;
+      description = `Inbound call from ${normalizedPhone}`;
     } else {
-      return `Outbound call to ${normalizedPhone}`;
+      description = `Outbound call to ${normalizedPhone}`;
     }
+    
+    // Add recording link if available
+    if (callLog.recording_url) {
+      description += ` - [Listen to Recording](${callLog.recording_url})`;
+    }
+    
+    return description;
   }
 
   /**
