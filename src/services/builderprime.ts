@@ -163,11 +163,22 @@ export class BuilderPrimeClient {
       };
     }
 
-    // Multiple matches - log warning and return first match
-    console.log(`⚠️ Multiple client matches (${matches.length}) found for ${originalPhone}, using first match`);
-    console.log(`   Matches: ${matches.map(m => `ID:${(m as any).ID || 'unknown'}`).join(', ')}`);
+    // Multiple matches - prioritize active opportunities over dead-end ones
+    console.log(`⚠️ Multiple client matches (${matches.length}) found for ${originalPhone}`);
+    console.log(`   Matches: ${matches.map(m => `ID:${(m as any).id || 'unknown'}, Status:${(m as any).leadStatusName || 'unknown'}`).join(', ')}`);
     
-    const client = this.extractClientData(matches[0]);
+    // Filter out dead-end opportunities (like "Not qualified, cant do")
+    const activeMatches = matches.filter(m => {
+      const status = (m as any).leadStatusName?.toLowerCase() || '';
+      return !status.includes('not qualified') && !status.includes('cant do') && !status.includes('dead');
+    });
+    
+    // Use active match if available, otherwise fall back to first match
+    const selectedMatch = activeMatches.length > 0 ? activeMatches[0] : matches[0];
+    const client = this.extractClientData(selectedMatch);
+    
+    console.log(`✅ Selected opportunity ID: ${client.opportunityId} (${activeMatches.length > 0 ? 'active' : 'fallback'})`);
+    
     return {
       success: true,
       data: client
